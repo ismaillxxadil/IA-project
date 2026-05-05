@@ -1,0 +1,36 @@
+using System.ComponentModel.DataAnnotations;
+using SmartRentApi.Models;
+using System.Collections.Generic;
+
+namespace SmartRentApi.DTOs
+{
+    public class PropertyCreateDto
+    {
+        [Required]
+        public int LandlordId { get; set; }
+
+        [Required, MaxLength(200)]
+        public string Title { get; set; }
+
+        [MaxLength(4000)]
+        public string Description { get; set; }
+
+        [Required]
+        public decimal Price { get; set; }
+
+        [Required, MaxLength(500)]
+        public string Location { get; set; }
+
+        [Required]
+        public PropertyType Type { get; set; }
+
+        public bool HasParking { get; set; }
+        
+        public bool HasElevator { get; set; }
+        
+        public bool IsFurnished { get; set; }
+
+        // Optional image URLs provided by landlord
+        public List<string> ImageUrls { get; set; } = new List<string>();
+    }
+}

@@ -1,0 +1,160 @@
+@SmartRentApi_HostAddress = http://localhost:5184
+
+### WEATHER FORECAST
+
+GET {{SmartRentApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+### ---------------- AUTH & USERS ----------------
+### Register Admin Account
+POST {{SmartRentApi_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Super Admin",
+  "email": "admin@smartrent.com",
+  "password": "AdminPassword123!",
+  "role": 0
+}
+### 1. Register a Tenant (Auto-Approved)
+POST {{SmartRentApi_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Admin",
+  "email": "admin@example.com",
+  "password": "123456",
+  "role": 0
+}
+
+### 2. Register a Landlord (Pending)
+POST {{SmartRentApi_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Jane Landlord",
+  "email": "landlord@example.com",
+  "password": "Password123!",
+  "role": 1
+}
+
+### 2.5 Login to get JWT Token
+## save token in variable token 
+POST {{SmartRentApi_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "landlord@example.com",
+  "password": "Password123!"
+}
+
+### 3. Approve Landlord (Admin)
+# Replace {id} with the ID of the landlord created above
+## add header authorization with token
+PUT {{SmartRentApi_HostAddress}}/api/admin/landlords/3/approve
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiIyIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwiQWNjb3VudFN0YXR1cyI6IlBlbmRpbmciLCJleHAiOjE3Nzc5MDc4OTAsImlzcyI6IlNtYXJ0UmVudEFwaSIsImF1ZCI6IlNtYXJ0UmVudFVzZXJzIn0.RYjZtuGnV5W7cBe-3NL23dmsbrh_leJxlKdRJhXZx8M
+
+### ---------------- PROPERTIES ----------------
+
+### 4. Create Property (Requires an Approved Landlord ID)
+# Replace landlordId with an approved landlord ID
+POST {{SmartRentApi_HostAddress}}/api/properties
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiIzIiwiZW1haWwiOiJsYW5kbG9yZEBleGFtcGxlLmNvbSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkxhbmRsb3JkIiwiQWNjb3VudFN0YXR1cyI6IkFwcHJvdmVkIiwiZXhwIjoxNzc3OTA4MTA5LCJpc3MiOiJTbWFydFJlbnRBcGkiLCJhdWQiOiJTbWFydFJlbnRVc2VycyJ9.aNJq4kV39a88cg9WSxZdJoqpziss9TDrTw58j3rkF9c
+
+{
+  "landlordId": 3,
+  "title": "Beautiful Apartment in City Center",
+  "description": "A nice and cozy apartment...",
+  "price": 1200.50,
+  "location": "City Center, Main Street 123",
+  "type": 0,
+  "hasParking": true,
+  "hasElevator": true,
+  "isFurnished": true
+}
+
+### 5. Approve Property (Admin)
+# Replace {id} with the newly created property ID
+PUT {{SmartRentApi_HostAddress}}/api/admin/properties/2/approve
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZWlkZW50aWZpZXIiOiIyIiwiZW1haWwiOiJhZG1pbkBleGFtcGxlLmNvbSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwiQWNjb3VudFN0YXR1cyI6IlBlbmRpbmciLCJleHAiOjE3Nzc5MDc4OTAsImlzcyI6IlNtYXJ0UmVudEFwaSIsImF1ZCI6IlNtYXJ0UmVudFVzZXJzIn0.RYjZtuGnV5W7cBe-3NL23dmsbrh_leJxlKdRJhXZx8M
+
+### 6. Get All Available Properties
+GET {{SmartRentApi_HostAddress}}/api/properties
+Accept: application/json
+
+### 7. Get Available Properties with Filters
+GET {{SmartRentApi_HostAddress}}/api/properties?location=City&minPrice=1000&type=0
+Accept: application/json
+
+### 8. Get Property By ID
+# Replace {id} with a valid property ID
+GET {{SmartRentApi_HostAddress}}/api/properties/1
+Accept: application/json
+
+### ---------------- NEW FEATURES ----------------
+
+### 9. Add Property to Favorites (Tenant)
+POST {{SmartRentApi_HostAddress}}/api/favorites
+Content-Type: application/json
+Authorization: Bearer <tenant_token_here>
+
+{
+  "propertyId": 1
+}
+
+### 10. Request a Visit (Tenant)
+POST {{SmartRentApi_HostAddress}}/api/visits
+Content-Type: application/json
+Authorization: Bearer <tenant_token_here>
+
+{
+  "propertyId": 1,
+  "scheduledDate": "2026-05-10T10:00:00Z"
+}
+
+### 11. Accept Visit Request (Landlord)
+PUT {{SmartRentApi_HostAddress}}/api/visits/1/status
+Content-Type: application/json
+Authorization: Bearer <landlord_token_here>
+
+{
+  "status": 1
+}
+
+### 12. Submit Rental Application (Tenant)
+POST {{SmartRentApi_HostAddress}}/api/applications
+Content-Type: application/json
+Authorization: Bearer <tenant_token_here>
+
+{
+  "propertyId": 1,
+  "documentUrl": "https://example.com/my-documents.pdf"
+}
+
+### 13. Accept Rental Application (Landlord) - Changes Property to Rented!
+PUT {{SmartRentApi_HostAddress}}/api/applications/1/status
+Content-Type: application/json
+Authorization: Bearer <landlord_token_here>
+
+{
+  "status": 1
+}
+
+### 14. Add Review (Tenant - Must have rented the property)
+POST {{SmartRentApi_HostAddress}}/api/reviews
+Content-Type: application/json
+Authorization: Bearer <tenant_token_here>
+
+{
+  "propertyId": 1,
+  "rating": 5,
+  "comment": "Amazing property, the landlord was great!"
+}
+
+### 15. Get Landlord's Own Properties (Landlord)
+GET {{SmartRentApi_HostAddress}}/api/properties/my-properties
+Accept: application/json
+Authorization: Bearer <landlord_token_here>
