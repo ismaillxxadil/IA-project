@@ -9,21 +9,17 @@ namespace SmartRentApi.Models
         public int Id { get; set; }
 
         [Required, MaxLength(200)]
-        public string FullName { get; set; }
+        public required string FullName { get; set; }
 
         [Required, EmailAddress, MaxLength(200)]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         [Required, MaxLength(500)]
-        public string PasswordHash { get; set; }
+        public required string PasswordHash { get; set; }
 
-        [Required]
         public Role Role { get; set; }
 
-        [Required]
         public AccountStatus AccountStatus { get; set; }
-
-        [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual ICollection<Property> Properties { get; set; } = new HashSet<Property>();

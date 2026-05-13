@@ -57,6 +57,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
 
+// Register Generic Repository and Services (Repository Pattern)
+builder.Services.AddScoped(typeof(SmartRentApi.Repositories.IGenericRepository<>), typeof(SmartRentApi.Repositories.GenericRepository<>));
+builder.Services.AddScoped<SmartRentApi.Services.IPropertyService, SmartRentApi.Services.PropertyService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -64,7 +68,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseCors("ReactApp");      // must be before UseAuthentication
+app.UseCors("ReactApp");     
 app.UseAuthentication();
 app.UseAuthorization();
 

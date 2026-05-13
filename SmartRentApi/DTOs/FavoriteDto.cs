@@ -6,7 +6,7 @@ namespace SmartRentApi.DTOs
     {
         public int Id { get; set; }
         public int PropertyId { get; set; }
-        public string PropertyTitle { get; set; }
+        public required string PropertyTitle { get; set; }
         public DateTime AddedAt { get; set; }
     }
 

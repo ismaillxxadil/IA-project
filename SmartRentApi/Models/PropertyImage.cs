@@ -8,9 +8,9 @@ namespace SmartRentApi.Models
 
         [Required]
         public int PropertyId { get; set; }
-        public virtual Property Property { get; set; }
+        public virtual Property Property { get; set; } = null!;
 
         [Required, MaxLength(1000)]
-        public string ImageUrl { get; set; }
+        public required string ImageUrl { get; set; }
     }
 }

@@ -9,14 +9,14 @@ namespace SmartRentApi.Models
 
         [Required]
         public int PropertyId { get; set; }
-        public virtual Property Property { get; set; }
+        public virtual Property Property { get; set; } = null!;
 
         [Required]
         public int TenantId { get; set; }
-        public virtual User Tenant { get; set; }
+        public virtual User Tenant { get; set; } = null!;
 
         [Required, MaxLength(1000)]
-        public string DocumentUrl { get; set; }
+        public required string DocumentUrl { get; set; }
 
         [Required]
         public ApplicationStatus Status { get; set; }

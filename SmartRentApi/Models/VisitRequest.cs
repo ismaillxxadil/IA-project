@@ -9,11 +9,11 @@ namespace SmartRentApi.Models
 
         [Required]
         public int PropertyId { get; set; }
-        public virtual Property Property { get; set; }
+        public virtual Property Property { get; set; } = null!;
 
         [Required]
         public int TenantId { get; set; }
-        public virtual User Tenant { get; set; }
+        public virtual User Tenant { get; set; } = null!;
 
         [Required]
         public DateTime ScheduledDate { get; set; }

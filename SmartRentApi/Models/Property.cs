@@ -11,19 +11,19 @@ namespace SmartRentApi.Models
 
         [Required]
         public int LandlordId { get; set; }
-        public virtual User Landlord { get; set; }
+        public virtual User Landlord { get; set; } = null!;
 
         [Required, MaxLength(200)]
-        public string Title { get; set; }
+        public required string Title { get; set; }
 
         [MaxLength(4000)]
-        public string Description { get; set; }
+        public required string Description { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
 
         [Required, MaxLength(500)]
-        public string Location { get; set; }
+        public required string Location { get; set; }
 
         [Required]
         public PropertyType Type { get; set; }

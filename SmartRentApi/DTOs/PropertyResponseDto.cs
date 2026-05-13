@@ -7,10 +7,10 @@ namespace SmartRentApi.DTOs
     public class PropertyResponseDto
     {
         public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public required string Title { get; set; }
+        public required string Description { get; set; }
         public decimal Price { get; set; }
-        public string Location { get; set; }
+        public required string Location { get; set; }
         public PropertyType Type { get; set; }
         public bool HasParking { get; set; }
         public bool HasElevator { get; set; }
@@ -18,7 +18,7 @@ namespace SmartRentApi.DTOs
         public PropertyStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         
-        public string LandlordName { get; set; }
+        public required string LandlordName { get; set; }
         public int LandlordId { get; set; }
 
         public List<string> ImageUrls { get; set; } = new List<string>();

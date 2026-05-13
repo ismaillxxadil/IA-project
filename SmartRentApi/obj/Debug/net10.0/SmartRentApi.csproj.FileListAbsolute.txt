@@ -155,3 +155,4 @@ F:\sm2\IA\SmartRent\SmartRentApi\bin\Debug\net10.0\Microsoft.IdentityModel.Proto
 F:\sm2\IA\SmartRent\SmartRentApi\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 F:\sm2\IA\SmartRent\SmartRentApi\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
 F:\sm2\IA\SmartRent\SmartRentApi\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
+F:\sm2\IA\SmartRent\SmartRentApi\obj\Debug\net10.0\SmartRentApi.sourcelink.json
