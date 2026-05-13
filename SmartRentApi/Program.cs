@@ -60,6 +60,11 @@ builder.Services.AddSignalR();
 // Register Generic Repository and Services (Repository Pattern)
 builder.Services.AddScoped(typeof(SmartRentApi.Repositories.IGenericRepository<>), typeof(SmartRentApi.Repositories.GenericRepository<>));
 builder.Services.AddScoped<SmartRentApi.Services.IPropertyService, SmartRentApi.Services.PropertyService>();
+builder.Services.AddScoped<SmartRentApi.Services.IAdminService, SmartRentApi.Services.AdminService>();
+builder.Services.AddScoped<SmartRentApi.Services.IReviewService, SmartRentApi.Services.ReviewService>();
+builder.Services.AddScoped<SmartRentApi.Services.IApplicationService, SmartRentApi.Services.ApplicationService>();
+builder.Services.AddScoped<SmartRentApi.Services.IVisitService, SmartRentApi.Services.VisitService>();
+builder.Services.AddScoped<SmartRentApi.Services.IFavoriteService, SmartRentApi.Services.FavoriteService>();
 
 var app = builder.Build();
 

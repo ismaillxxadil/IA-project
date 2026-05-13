@@ -1,14 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SmartRentApi.Data;
 using SmartRentApi.DTOs;
 using SmartRentApi.Models;
-using SmartRentApi.Hubs;
-using System.Linq;
+using SmartRentApi.Services;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
 
 namespace SmartRentApi.Controllers
 {
@@ -17,13 +14,11 @@ namespace SmartRentApi.Controllers
     [Authorize]
     public class VisitsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IVisitService _visitService;
 
-        public VisitsController(ApplicationDbContext context, IHubContext<NotificationHub> hubContext)
+        public VisitsController(IVisitService visitService)
         {
-            _context = context;
-            _hubContext = hubContext;
+            _visitService = visitService;
         }
 
         [HttpPost]
@@ -33,26 +28,15 @@ namespace SmartRentApi.Controllers
             var tenantIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(tenantIdString, out int tenantId)) return Unauthorized();
 
-            var property = await _context.Properties.FindAsync(dto.PropertyId);
-            if (property == null || property.Status != PropertyStatus.Available)
-                return BadRequest("Property is not available or does not exist.");
-
-            var visitRequest = new VisitRequest
+            try
             {
-                TenantId = tenantId,
-                PropertyId = dto.PropertyId,
-                ScheduledDate = dto.ScheduledDate,
-                Status = VisitRequestStatus.Pending
-            };
-
-            _context.VisitRequests.Add(visitRequest);
-            await _context.SaveChangesAsync();
-
-            // Notify Landlord
-            await _hubContext.Clients.User(property.LandlordId.ToString())
-                .SendAsync("ReceiveNotification", $"New visit request for your property: {property.Title}");
-
-            return Ok(new { message = "Visit request submitted successfully." });
+                await _visitService.RequestVisitAsync(dto, tenantId);
+                return Ok(new { message = "Visit request submitted successfully." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet]
@@ -62,37 +46,20 @@ namespace SmartRentApi.Controllers
             var role = User.FindFirstValue(ClaimTypes.Role);
             if (!int.TryParse(userIdString, out int userId)) return Unauthorized();
 
-            var query = _context.VisitRequests
-                .Include(v => v.Property)
-                .Include(v => v.Tenant)
-                .AsQueryable();
+            try
+            {
+                if (!Enum.TryParse<Role>(role, out var userRole))
+                {
+                    return Forbid();
+                }
 
-            if (role == "Tenant")
-            {
-                query = query.Where(v => v.TenantId == userId);
+                var visits = await _visitService.GetVisitsAsync(userId, userRole);
+                return Ok(visits);
             }
-            else if (role == "Landlord")
-            {
-                query = query.Where(v => v.Property.LandlordId == userId);
-            }
-            else
+            catch (UnauthorizedAccessException)
             {
                 return Forbid();
             }
-
-            var visits = await query.Select(v => new VisitRequestDto
-            {
-                Id = v.Id,
-                PropertyId = v.PropertyId,
-                PropertyTitle = v.Property.Title,
-                TenantId = v.TenantId,
-                TenantName = v.Tenant.FullName,
-                ScheduledDate = v.ScheduledDate,
-                Status = v.Status,
-                CreatedAt = v.CreatedAt
-            }).ToListAsync();
-
-            return Ok(visits);
         }
 
         [HttpPut("{id}/status")]
@@ -102,23 +69,19 @@ namespace SmartRentApi.Controllers
             var landlordIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(landlordIdString, out int landlordId)) return Unauthorized();
 
-            var visit = await _context.VisitRequests
-                .Include(v => v.Property)
-                .FirstOrDefaultAsync(v => v.Id == id);
-
-            if (visit == null) return NotFound("Visit request not found.");
-
-            if (visit.Property.LandlordId != landlordId)
-                return Forbid("You can only update visit requests for your own properties.");
-
-            visit.Status = dto.Status;
-            await _context.SaveChangesAsync();
-
-            // Notify Tenant
-            await _hubContext.Clients.User(visit.TenantId.ToString())
-                .SendAsync("ReceiveNotification", $"Your visit request for {visit.Property.Title} was {dto.Status}.");
-
-            return Ok(new { message = "Visit request status updated." });
+            try
+            {
+                await _visitService.UpdateVisitStatusAsync(id, landlordId, dto.Status);
+                return Ok(new { message = "Visit request status updated." });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Visit request not found.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
         }
     }
 }

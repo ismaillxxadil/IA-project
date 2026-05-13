@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SmartRentApi.Data;
 using SmartRentApi.DTOs;
-using SmartRentApi.Models;
-using System.Linq;
+using SmartRentApi.Services;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -14,11 +12,11 @@ namespace SmartRentApi.Controllers
     [ApiController]
     public class ReviewsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IReviewService _reviewService;
 
-        public ReviewsController(ApplicationDbContext context)
+        public ReviewsController(IReviewService reviewService)
         {
-            _context = context;
+            _reviewService = reviewService;
         }
 
         [HttpPost]
@@ -28,53 +26,21 @@ namespace SmartRentApi.Controllers
             var tenantIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(tenantIdString, out int tenantId)) return Unauthorized();
 
-            // Validate that the tenant actually rented this property
-            var hasRented = await _context.RentalApplications.AnyAsync(a => 
-                a.TenantId == tenantId && 
-                a.PropertyId == dto.PropertyId && 
-                a.Status == ApplicationStatus.Accepted);
-
-            if (!hasRented)
+            try
             {
-                return BadRequest("You can only review properties you have successfully rented.");
+                await _reviewService.AddReviewAsync(dto, tenantId);
+                return Ok(new { message = "Review added successfully." });
             }
-
-            var existingReview = await _context.Reviews.AnyAsync(r => r.TenantId == tenantId && r.PropertyId == dto.PropertyId);
-            if (existingReview)
+            catch (InvalidOperationException ex)
             {
-                return BadRequest("You have already reviewed this property.");
+                return BadRequest(ex.Message);
             }
-
-            var review = new Review
-            {
-                TenantId = tenantId,
-                PropertyId = dto.PropertyId,
-                Rating = dto.Rating,
-                Comment = dto.Comment
-            };
-
-            _context.Reviews.Add(review);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Review added successfully." });
         }
 
         [HttpGet("property/{propertyId}")]
         public async Task<IActionResult> GetPropertyReviews(int propertyId)
         {
-            var reviews = await _context.Reviews
-                .Include(r => r.Tenant)
-                .Where(r => r.PropertyId == propertyId)
-                .Select(r => new ReviewDto
-                {
-                    Id = r.Id,
-                    PropertyId = r.PropertyId,
-                    TenantName = r.Tenant.FullName,
-                    Rating = r.Rating,
-                    Comment = r.Comment,
-                    CreatedAt = r.CreatedAt
-                }).ToListAsync();
-
+            var reviews = await _reviewService.GetPropertyReviewsAsync(propertyId);
             return Ok(reviews);
         }
     }

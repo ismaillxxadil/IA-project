@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SmartRentApi.Data;
 using SmartRentApi.DTOs;
-using SmartRentApi.Models;
-using System.Linq;
+using SmartRentApi.Services;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -15,11 +13,11 @@ namespace SmartRentApi.Controllers
     [Authorize(Roles = "Tenant")]
     public class FavoritesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IFavoriteService _favoriteService;
 
-        public FavoritesController(ApplicationDbContext context)
+        public FavoritesController(IFavoriteService favoriteService)
         {
-            _context = context;
+            _favoriteService = favoriteService;
         }
 
         [HttpPost]
@@ -28,23 +26,19 @@ namespace SmartRentApi.Controllers
             var tenantIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(tenantIdString, out int tenantId)) return Unauthorized();
 
-            var property = await _context.Properties.FindAsync(dto.PropertyId);
-            if (property == null || property.Status != PropertyStatus.Available)
-                return BadRequest("Property is not available or does not exist.");
-
-            var exists = await _context.Favorites.AnyAsync(f => f.TenantId == tenantId && f.PropertyId == dto.PropertyId);
-            if (exists) return BadRequest("Property is already in favorites.");
-
-            var favorite = new Favorite
+            try
             {
-                TenantId = tenantId,
-                PropertyId = dto.PropertyId
-            };
-
-            _context.Favorites.Add(favorite);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Added to favorites." });
+                await _favoriteService.AddFavoriteAsync(dto, tenantId);
+                return Ok(new { message = "Added to favorites." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet]
@@ -53,17 +47,7 @@ namespace SmartRentApi.Controllers
             var tenantIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(tenantIdString, out int tenantId)) return Unauthorized();
 
-            var favorites = await _context.Favorites
-                .Include(f => f.Property)
-                .Where(f => f.TenantId == tenantId)
-                .Select(f => new FavoriteDto
-                {
-                    Id = f.Id,
-                    PropertyId = f.PropertyId,
-                    PropertyTitle = f.Property.Title,
-                    AddedAt = f.AddedAt
-                }).ToListAsync();
-
+            var favorites = await _favoriteService.GetFavoritesAsync(tenantId);
             return Ok(favorites);
         }
 
@@ -73,13 +57,15 @@ namespace SmartRentApi.Controllers
             var tenantIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!int.TryParse(tenantIdString, out int tenantId)) return Unauthorized();
 
-            var favorite = await _context.Favorites.FirstOrDefaultAsync(f => f.TenantId == tenantId && f.PropertyId == propertyId);
-            if (favorite == null) return NotFound("Favorite not found.");
-
-            _context.Favorites.Remove(favorite);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Removed from favorites." });
+            try
+            {
+                await _favoriteService.RemoveFavoriteAsync(propertyId, tenantId);
+                return Ok(new { message = "Removed from favorites." });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
     }
 }
